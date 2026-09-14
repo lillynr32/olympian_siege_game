@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olympian Siege Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+        }
+        
+        .turn-counter {
+            text-align: center;
+            font-size: 1.2em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .character-card, .fortress-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .character-card:hover, .fortress-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            background: #f0f4ff;
+        }
+        
+        .character-card.dead {
+            opacity: 0.5;
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        
+        .fortress-card.conquered {
+            opacity: 0.5;
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        
+        .character-name, .fortress-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        
+        .character-name.dead::after {
+            content: " ☠️";
+            color: red;
+        }
+        
+        .fortress-name.conquered::after {
+            content: " 🏚️";
+            color: red;
+        }
+        
+        .health-bar, .defense-bar {
+            background: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .health-fill, .defense-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .health-fill {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+        }
+        
+        .defense-fill {
+            background: linear-gradient(90deg, #2196F3, #03A9F4);
+        }
+        
+        .ability {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .battle-section {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            margin-bottom: 30px;
+        }
+        
+        .battle-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .attack-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        select {
+            background: white;
+            color: #333;
+        }
+        
+        select:focus {
+            outline: none;
+            background: #f0f4ff;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .battle-log {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-entry.victory {
+            background: #c8e6c9;
+            color: #2e7d32;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        .game-over {
+            background: #fff9c4;
+            border: 2px solid #FBC02D;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .game-over h2 {
+            color: #F57F17;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        
+        .start-button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            width: 200px;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .start-button:hover {
+            background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        @media (max-width: 768px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Olympian Siege ⚡</h1>
+        <p class="subtitle">Battle for control of legendary fortresses</p>
+        
+        <div id="gameOverScreen" class="game-over" style="display: none;">
+            <h2 id="gameOverText"></h2>
+            <button class="start-button" onclick="restartGame()">Play Again</button>
+        </div>
+        
+        <div class="turn-counter">
+            Turn: <span id="turnCount">0</span>
+        </div>
+        
+        <div class="game-grid">
+            <div class="section">
+                <h2>🏛️ Olympians</h2>
+                <div id="olympiansContainer" class="loading">Loading...</div>
+            </div>
+            
+            <div class="section">
+                <h2>🏰 Fortresses</h2>
+                <div id="fortressesContainer" class="loading">Loading...</div>
+            </div>
+        </div>
+        
+        <div class="battle-section">
+            <h2>⚔️ Combat Arena</h2>
+            
+            <div class="attack-controls">
+                <div class="control-group">
+                    <label for="attackerSelect">Choose Your Warrior:</label>
+                    <select id="attackerSelect">
+                        <option value="">Select an Olympian...</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="targetTypeSelect">Target Type:</label>
+                    <select id="targetTypeSelect" onchange="updateTargetSelect()">
+                        <option value="olympian">Olympian Warrior</option>
+                        <option value="fortress">Fortress</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="targetSelect">Choose Target:</label>
+                    <select id="targetSelect">
+                        <option value="">Select a target...</option>
+                    </select>
+                </div>
+                
+                <button onclick="performAttack()" id="attackBtn">⚡ ATTACK ⚡</button>
+            </div>
+            
+            <h3 style="margin-bottom: 10px; color: #667eea;">Recent Battle Events:</h3>
+            <div class="battle-log" id="battleLog">
+                <div class="log-entry">⚔️ Battle awaits. Choose your warrior and target to begin!</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        let gameState = null;
+        
+        // Load initial game status
+        async function loadGameStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                gameState = data;
+                updateUI();
+            } catch (error) {
+                console.error('Error loading game status:', error);
+                document.getElementById("olympiansContainer").innerHTML = '<div class="loading">❌ Error connecting to server</div>';
+            }
+        }
+        
+        // Update UI
+        function updateUI() {
+            if (!gameState) return;
+            
+            updateTurnCounter();
+            updateOlympians();
+            updateFortresses();
+            updateAttackerSelect();
+            updateTargetSelect();
+            updateBattleLog();
+            
+            if (gameState.game_over) {
+                showGameOver();
+            }
+        }
+        
+        function updateTurnCounter() {
+            document.getElementById("turnCount").textContent = gameState.turn;
+        }
+        
+        function updateOlympians() {
+            const container = document.getElementById("olympiansContainer");
+            container.innerHTML = "";
+            
+            for (const [name, olympian] of Object.entries(gameState.olympians)) {
+                const healthPercent = (olympian.health / olympian.max_health) * 100;
+                const isDeadClass = olympian.is_alive ? "" : "dead";
+                
+                const card = document.createElement("div");
+                card.className = `character-card ${isDeadClass}`;
+                card.innerHTML = `
+                    <div class="character-name ${isDeadClass ? 'dead' : ''}">${name}</div>
+                    <div class="health-bar">
+                        <div class="health-fill" style="width: ${healthPercent}%">
+                            ${olympian.health}/${olympian.max_health}
+                        </div>
+                    </div>
+                    <div class="ability">💪 ${olympian.special_ability}</div>
+                `;
+                container.appendChild(card);
+            }
+        }
+        
+        function updateFortresses() {
+            const container = document.getElementById("fortressesContainer");
+            container.innerHTML = "";
+            
+            for (const [name, fortress] of Object.entries(gameState.fortresses)) {
+                const defensePercent = (fortress.defense / fortress.max_defense) * 100;
+                const isConqueredClass = fortress.is_standing ? "" : "conquered";
+                
+                const card = document.createElement("div");
+                card.className = `fortress-card ${isConqueredClass}`;
+                card.innerHTML = `
+                    <div class="fortress-name ${isConqueredClass ? 'conquered' : ''}">${name}</div>
+                    <div class="defense-bar">
+                        <div class="defense-fill" style="width: ${defensePercent}%">
+                            ${fortress.defense}/${fortress.max_defense}
+                        </div>
+                    </div>
+                    <div class="ability">👥 Garrison: ${fortress.garrison_size}</div>
+                `;
+                container.appendChild(card);
+            }
+        }
+        
+        function updateAttackerSelect() {
+            const select = document.getElementById("attackerSelect");
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Select an Olympian...</option>';
+            
+            for (const [name, olympian] of Object.entries(gameState.olympians)) {
+                if (olympian.is_alive) {
+                    const option = document.createElement("option");
+                    option.value = name;
+                    option.textContent = name;
+                    select.appendChild(option);
+                }
+            }
+            
+            if (currentValue && gameState.olympians[currentValue]?.is_alive) {
+                select.value = currentValue;
+            }
+        }
+        
+        function updateTargetSelect() {
+            const select = document.getElementById("targetSelect");
+            const targetType = document.getElementById("targetTypeSelect").value;
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">Select a target...</option>';
+            
+            if (targetType === "olympian") {
+                for (const [name, olympian] of Object.entries(gameState.olympians)) {
+                    if (olympian.is_alive && name !== document.getElementById("attackerSelect").value) {
+                        const option = document.createElement("option");
+                        option.value = name;
+                        option.textContent = name;
+                        select.appendChild(option);
+                    }
+                }
+            } else {
+                for (const [name, fortress] of Object.entries(gameState.fortresses)) {
+                    if (fortress.is_standing) {
+                        const option = document.createElement("option");
+                        option.value = name;
+                        option.textContent = name;
+                        select.appendChild(option);
+                    }
+                }
+            }
+        }
+        
+        function updateBattleLog() {
+            const logContainer = document.getElementById("battleLog");
+            logContainer.innerHTML = "";
+            
+            if (gameState.battle_log.length === 0) {
+                logContainer.innerHTML = '<div class="log-entry">⚔️ Battle awaits. Choose your warrior and target to begin!</div>';
+                return;
+            }
+            
+            const recentLogs = gameState.battle_log.slice(-5).reverse();
+            recentLogs.forEach(log => {
+                const entry = document.createElement("div");
+                entry.className = "log-entry";
+                entry.textContent = log;
+                logContainer.appendChild(entry);
+            });
+        }
+        
+        async function performAttack() {
+            const attacker = document.getElementById("attackerSelect").value;
+            const target = document.getElementById("targetSelect").value;
+            const targetType = document.getElementById("targetTypeSelect").value;
+            
+            if (!attacker || !target) {
+                alert("Please select both an attacker and a target!");
+                return;
+            }
+            
+            const attackBtn = document.getElementById("attackBtn");
+            attackBtn.disabled = true;
+            
+            try {
+                const payload = {
+                    attacker: attacker,
+                    target_type: targetType
+                };
+                
+                if (targetType === "olympian") {
+                    payload.defender = target;
+                } else {
+                    payload.fortress = target;
+                }
+                
+                const response = await fetch('/api/attack', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    gameState = data.status;
+                    updateUI();
+                } else {
+                    alert("Attack failed: " + data.message);
+                }
+            } catch (error) {
+                console.error('Error performing attack:', error);
+                alert("Error performing attack. Check console.");
+            } finally {
+                attackBtn.disabled = false;
+            }
+        }
+        
+        function showGameOver() {
+            const screen = document.getElementById("gameOverScreen");
+            let message = "Game Over!";
+            
+            if (gameState.winner === "Olympians") {
+                message = "⚡ OLYMPIANS WIN! All Fortresses Conquered! ⚡";
+            } else if (gameState.winner === "Fortresses") {
+                message = "🏰 FORTRESSES WIN! The Gods Have Fallen! 🏰";
+            }
+            
+            document.getElementById("gameOverText").textContent = message;
+            screen.style.display = "block";
+            screen.scrollIntoView({ behavior: "smooth" });
+        }
+        
+        async function restartGame() {
+            try {
+                const response = await fetch('/api/restart', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                gameState = data;
+                document.getElementById("gameOverScreen").style.display = "none";
+                updateUI();
+            } catch (error) {
+                console.error('Error restarting game:', error);
+                alert("Error restarting game. Refresh the page.");
+            }
+        }
+        
+        // Load game when page loads
+        loadGameStatus();
+    </script>
+</body>
+</html>
