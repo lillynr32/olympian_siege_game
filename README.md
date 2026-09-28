@@ -1,2 +1,2 @@
-# olympian_siege_game
+# olympian siege game
 A Python game featuring Olympian siege mechanics
