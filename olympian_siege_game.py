@@ -136,13 +136,13 @@ class OlympianSiegeGame:
         
         for name, olympian in self.olympians.items():
             status += f"{name}: HP {olympian.health} "
-            status += "✓" if olympian.is_alive() else "✗ DEFEATED\n"
+            status += "✓\n" if olympian.is_alive() else "✗ DEFEATED\n"
         
         status += "\n--- Fortresses ---\n"
         
         for name, fortress in self.fortresses.items():
             status += f"{name}: Defense {fortress.defense} "
-            status += "✓" if fortress.is_standing() else "✗ CONQUERED\n"
+            status += "✓\n" if fortress.is_standing() else "✗ CONQUERED\n"
         
         return status
     
