@@ -7,6 +7,28 @@ from dataclasses import dataclass
 from typing import List, Dict, Optional
 
 
+# ANSI Color codes for terminal output
+class Colors:
+    """ANSI color codes for terminal text styling"""
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    
+    # Foreground colors
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN = "\033[96m"
+    WHITE = "\033[97m"
+    
+    # Background colors
+    BG_RED = "\033[101m"
+    BG_GREEN = "\033[102m"
+    BG_YELLOW = "\033[103m"
+    BG_BLUE = "\033[104m"
+
+
 @dataclass
 class Olympian:
     """Represents an Olympian god/goddess"""
@@ -85,64 +107,74 @@ class OlympianSiegeGame:
     
     def attack(self, attacker_name: str, defender_name: str, 
                target_fortress: Optional[str] = None) -> str:
-        """Perform an attack"""
+        """Perform an attack with color-coded output"""
         if attacker_name not in self.olympians:
-            return f"Attacker {attacker_name} not found!"
+            return f"{Colors.RED}Attacker {attacker_name} not found!{Colors.RESET}"
         
         attacker = self.olympians[attacker_name]
         
         if not attacker.is_alive():
-            return f"{attacker_name} is defeated and cannot attack!"
+            return f"{Colors.RED}{attacker_name} is defeated and cannot attack!{Colors.RESET}"
         
         if target_fortress:
             if target_fortress not in self.fortresses:
-                return f"Fortress {target_fortress} not found!"
+                return f"{Colors.RED}Fortress {target_fortress} not found!{Colors.RESET}"
             
             fortress = self.fortresses[target_fortress]
             damage = attacker.special_attack()
             fortress.take_siege_damage(damage)
             
-            result = f"{attacker_name} attacks {target_fortress} with {damage} damage! "
-            result += f"Fortress defense now: {fortress.defense}"
+            # Color-code the attack message
+            result = f"{Colors.CYAN}⚡ {attacker_name} uses {attacker.special_ability} on {target_fortress}{Colors.RESET} "
+            result += f"dealing {Colors.YELLOW}{Colors.BOLD}{damage} damage{Colors.RESET}!\n"
+            result += f"🏰 Fortress defense now: {fortress.defense}"
             
             if not fortress.is_standing():
-                result += f" - {target_fortress} has been conquered!"
+                result += f" {Colors.GREEN}{Colors.BOLD}→ 🎉 {target_fortress} has been conquered!{Colors.RESET}"
             
             return result
         else:
             if defender_name not in self.olympians:
-                return f"Defender {defender_name} not found!"
+                return f"{Colors.RED}Defender {defender_name} not found!{Colors.RESET}"
             
             defender = self.olympians[defender_name]
             
             if not defender.is_alive():
-                return f"{defender_name} is already defeated!"
+                return f"{Colors.RED}{defender_name} is already defeated!{Colors.RESET}"
             
             damage = attacker.special_attack()
             defender.take_damage(damage)
             
-            result = f"{attacker_name} attacks {defender_name} with {damage} damage! "
-            result += f"{defender_name}'s health: {defender.health}"
+            # Color-code the duel message
+            result = f"{Colors.MAGENTA}⚔️ {attacker_name} targets {defender_name} with {attacker.special_ability}{Colors.RESET} "
+            result += f"for {Colors.RED}{Colors.BOLD}{damage} damage{Colors.RESET}!\n"
+            result += f"❤️ {defender_name}'s health: {defender.health}"
             
             if not defender.is_alive():
-                result += f" - {defender_name} has been defeated!"
+                result += f" {Colors.RED}{Colors.BOLD}→ 💀 {defender_name} has been defeated!{Colors.RESET}"
             
             return result
     
     def get_status(self) -> str:
-        """Get current game status"""
-        status = f"\n=== Turn {self.turn_count} ===" \
-                 f"\n\n--- Olympians ---\n"
+        """Get current game status with color coding"""
+        status = f"\n{Colors.BOLD}=== Turn {self.turn_count} ==={Colors.RESET}" \
+                 f"\n\n{Colors.BLUE}{Colors.BOLD}--- Olympians ---{Colors.RESET}\n"
         
         for name, olympian in self.olympians.items():
             status += f"{name}: HP {olympian.health} "
-            status += "✓\n" if olympian.is_alive() else "✗ DEFEATED\n"
+            if olympian.is_alive():
+                status += f"{Colors.GREEN}✓{Colors.RESET}\n"
+            else:
+                status += f"{Colors.RED}✗ DEFEATED{Colors.RESET}\n"
         
-        status += "\n--- Fortresses ---\n"
+        status += f"\n{Colors.BLUE}{Colors.BOLD}--- Fortresses ---{Colors.RESET}\n"
         
         for name, fortress in self.fortresses.items():
             status += f"{name}: Defense {fortress.defense} "
-            status += "✓\n" if fortress.is_standing() else "✗ CONQUERED\n"
+            if fortress.is_standing():
+                status += f"{Colors.GREEN}✓{Colors.RESET}\n"
+            else:
+                status += f"{Colors.RED}✗ CONQUERED{Colors.RESET}\n"
         
         return status
     
@@ -155,7 +187,7 @@ def main():
     """Main game loop"""
     game = OlympianSiegeGame()
     
-    print("=== Welcome to Olympian Siege ===\n")
+    print(f"{Colors.BOLD}{Colors.CYAN}=== Welcome to Olympian Siege ==={Colors.RESET}\n")
     print(game.get_status())
     
     # Example game sequence
@@ -178,7 +210,7 @@ def main():
         standing_fortresses = sum(1 for f in game.fortresses.values() if f.is_standing())
         
         if alive_olympians == 0 or standing_fortresses == 0:
-            print("\n=== Game Over ===")
+            print(f"\n{Colors.BOLD}{Colors.RED}=== Game Over ==={Colors.RESET}")
             break
 
 
